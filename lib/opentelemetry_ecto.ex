@@ -4,6 +4,7 @@ defmodule OpentelemetryEcto do
   """
 
   require OpenTelemetry.Tracer
+  alias OpenTelemetry.{Span, Tracer}
 
   @doc """
   Attaches the OpentelemetryEcto handler to your repo events. This should be called
@@ -32,11 +33,12 @@ defmodule OpentelemetryEcto do
   end
 
   @doc false
-  def handle_event(event, measurements, %{query: query,
-                                          source: source,
-                                          result: query_result,
-                                          repo: repo,
-                                          type: type}, config) do
+  def handle_event(
+        event,
+        measurements,
+        %{query: query, source: source, result: query_result, repo: repo, type: type},
+        config
+      ) do
     # Doing all this even if the span isn't sampled so the sampler
     # could technically use the attributes to decide if it should sample or not
 
@@ -96,9 +98,8 @@ defmodule OpentelemetryEcto do
         {String.to_atom("#{k}_#{time_unit}s"), System.convert_time_unit(v, :native, time_unit)}
       end)
 
-      OpenTelemetry.Tracer.start_span(span_name, %{start_time: start_time,
-                                                   attributes: attributes ++ base_attributes})
-
-    OpenTelemetry.Tracer.end_span()
+    span_name
+    |> Tracer.start_span(%{start_time: start_time, attributes: attributes ++ base_attributes})
+    |> Span.end_span()
   end
 end
